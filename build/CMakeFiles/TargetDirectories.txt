@@ -1,0 +1,3 @@
+/Users/diassuleimenov/Desktop/library/build/CMakeFiles/stl_test.dir
+/Users/diassuleimenov/Desktop/library/build/CMakeFiles/edit_cache.dir
+/Users/diassuleimenov/Desktop/library/build/CMakeFiles/rebuild_cache.dir
