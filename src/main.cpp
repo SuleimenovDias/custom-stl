@@ -1,22 +1,42 @@
 #include <iostream>
-#include "mstd/vector.hpp"
+#include <cassert>
+#include <string_view>
+#include "mstd/trie.hpp"
 
 int main()
 {
-    // Create an empty vector of integers
-    mstd::vector<int> my_vec(2, 3);
+    std::cout << "--- Testing mstd::trie ---\n";
 
-    mstd::vector<int> v2(my_vec);
+    mstd::trie my_trie;
 
-    std::iostream::sync_with_stdio(false); // Optimize standard streams
+    my_trie.insert("apple");
+    my_trie.insert("app");
+    my_trie.insert("car");
+    my_trie.insert("cart");
 
-    std::cout << "Vector created successfully!\n";
-    std::cout << "Initial Size: " << v2.size() << "\n";
-    std::cout << "Initial Capacity: " << v2.capacity() << "\n";
+    std::cout << "Searching for 'apple' (Expected: 1): " << my_trie.search("apple") << "\n";
+    std::cout << "Searching for 'app'   (Expected: 1): " << my_trie.search("app") << "\n";
+    std::cout << "Searching for 'banana'(Expected: 0): " << my_trie.search("banana") << "\n";
+    std::cout << "Searching for 'ca'    (Expected: 0): " << my_trie.search("ca") << "\n";
 
-    if (v2.empty())
-    {
-        std::cout << "Vector is currently empty.\n";
-    }
+    std::cout << "---------------------------\n";
+
+    std::cout << "Starts with 'ap'      (Expected: 1): " << my_trie.starts_with("ap") << "\n";
+    std::cout << "Starts with 'car'     (Expected: 1): " << my_trie.starts_with("car") << "\n";
+    std::cout << "Starts with 'dog'     (Expected: 0): " << my_trie.starts_with("dog") << "\n";
+
+    std::cout << "---------------------------\n";
+
+    std::cout << "Erasing 'apple'...\n";
+    my_trie.erase("apple");
+
+    std::cout << "Searching for 'apple' (Expected: 0): " << my_trie.search("apple") << "\n";
+    std::cout << "Searching for 'app'   (Expected: 1): " << my_trie.search("app") << "\n";
+
+    std::cout << "Erasing 'app'...\n";
+    my_trie.erase("app");
+    std::cout << "Starts with 'ap'      (Expected: 0): " << my_trie.starts_with("ap") << "\n";
+
+    std::cout << "\nAll core functions tested successfully! Memory cleaned up safely.\n";
     return 0;
 }

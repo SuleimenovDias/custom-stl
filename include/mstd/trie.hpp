@@ -59,7 +59,7 @@ namespace mstd
         }
 
     public:
-        constexpr trie() : m_root(new TrieNode()) {}
+        trie() : m_root(new TrieNode()) {}
 
         constexpr trie(trie &&other) noexcept : m_root(other.m_root)
         {
