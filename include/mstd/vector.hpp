@@ -107,6 +107,35 @@ namespace mstd
             }
         }
 
+        constexpr vector(vector &&other) noexcept
+            : m_start(other.m_start), m_last(other.m_last), m_end(other.m_end)
+        {
+            other.m_start = nullptr;
+            other.m_last = nullptr;
+            other.m_end = nullptr;
+        }
+
+        constexpr vector &operator=(vector &&other) noexcept
+        {
+            if (this == &other)
+                return *this;
+
+            if (m_start)
+            {
+                delete[] m_start;
+            }
+
+            m_start = other.m_start;
+            m_last = other.m_last;
+            m_end = other.m_end;
+
+            other.m_start = nullptr;
+            other.m_last = nullptr;
+            other.m_end = nullptr;
+
+            return *this;
+        }
+
         constexpr ~vector()
         {
             std::destroy(m_start, m_last);

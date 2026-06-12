@@ -54,6 +54,57 @@ namespace mstd
             m_long.capacity = other.m_long.size;
         }
 
+        constexpr string(string &&other) noexcept : m_is_long(other.m_is_long)
+        {
+            if (!m_is_long)
+            {
+                std::copy(other.m_short.buffer, other.m_short.buffer + 16, m_short.buffer);
+                m_short.shifting_or_length_flag = other.m_short.shifting_or_length_flag;
+
+                other.m_short.buffer[0] = '\0';
+                other.m_short.shifting_or_length_flag = 0;
+                return;
+            }
+
+            m_long.start = other.m_long.start;
+            m_long.size = other.m_long.size;
+            m_long.capacity = other.m_long.capacity;
+
+            other.m_is_long = false;
+            other.m_short.buffer[0] = '\0';
+            other.m_short.shifting_or_length_flag = 0;
+        }
+
+        constexpr string &operator=(string &&other) noexcept
+        {
+            if (this == &other)
+                return *this;
+
+            if (m_is_long)
+            {
+                delete[] m_long.start;
+            }
+
+            m_is_long = other.m_is_long;
+            if (!m_is_long)
+            {
+                std::copy(other.m_short.buffer, other.m_short.buffer + 16, m_short.buffer);
+                m_short.shifting_or_length_flag = other.m_short.shifting_or_length_flag;
+            }
+            else
+            {
+                m_long.start = other.m_long.start;
+                m_long.size = other.m_long.size;
+                m_long.capacity = other.m_long.capacity;
+            }
+
+            other.m_is_long = false;
+            other.m_short.buffer[0] = '\0';
+            other.m_short.shifting_or_length_flag = 0;
+
+            return *this;
+        }
+
         ~string()
         {
             if (m_is_long)
@@ -198,20 +249,5 @@ namespace mstd
             result += rhs;
             return result;
         }
-
-        // void operator+=(const string &other)
-        // {
-        //     std::size_t new_size = size() + other.size();
-
-        //     if (new_size > SSO_CAPACITY)
-        //     {
-        //         m_is_long = true;
-        //         if (new_size > m_long.capacity)
-        //         {
-        //             m_long.start = static_cast<char *>(::operator new(new_size + 1));
-
-        //         }
-        //     }
-        // }
     };
 }
