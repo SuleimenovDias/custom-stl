@@ -35,7 +35,33 @@ namespace mstd
     public:
         string() = default;
 
-        string(const string &other)
+        string(const char *str) : m_is_long(false)
+        {
+            if (str == nullptr || str[0] == '\0')
+            {
+                m_short.buffer[0] = '\0';
+                m_short.shifting_or_length_flag = 0;
+                return;
+            }
+
+            const std::size_t len = std::strlen(str);
+            if (len <= SSO_CAPACITY)
+            {
+                std::copy(str, str + len, m_short.buffer);
+                m_short.buffer[len] = '\0';
+                m_short.shifting_or_length_flag = static_cast<unsigned char>(len);
+            }
+            else
+            {
+                m_is_long = true;
+                m_long.size = len;
+                m_long.capacity = len;
+                m_long.start = static_cast<char *>(::operator new(len + 1));
+                std::memcpy(m_long.start, str, len + 1);
+            }
+        }
+
+        string(const string &other) : m_is_long(false)
         {
             m_is_long = other.m_is_long;
 
@@ -54,7 +80,7 @@ namespace mstd
             m_long.capacity = other.m_long.size;
         }
 
-        constexpr string(string &&other) noexcept : m_is_long(other.m_is_long)
+        constexpr string(string &&other) noexcept : m_long(), m_is_long(other.m_is_long)
         {
             if (!m_is_long)
             {
