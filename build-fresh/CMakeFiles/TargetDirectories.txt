@@ -1,0 +1,3 @@
+/Users/diassuleimenov/Documents/custom-stl/build-fresh/CMakeFiles/stl_test.dir
+/Users/diassuleimenov/Documents/custom-stl/build-fresh/CMakeFiles/edit_cache.dir
+/Users/diassuleimenov/Documents/custom-stl/build-fresh/CMakeFiles/rebuild_cache.dir

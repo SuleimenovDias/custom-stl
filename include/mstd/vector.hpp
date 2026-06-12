@@ -1,6 +1,7 @@
 #pragma once
 #include <cstddef>
 #include <utility>
+#include <memory>
 
 namespace mstd
 {
@@ -52,15 +53,60 @@ namespace mstd
         }
 
     public:
-        constexpr vector(std::size_t new_size, T new_item) noexcept
+        vector() = default;
+
+        constexpr vector(std::size_t count, const T &new_item) : m_start(nullptr), m_last(nullptr), m_end_of_storage(nullptr)
         {
-            while (size() < new_size)
+            for (std::size_t i = 0; i < count; ++i)
             {
-                grow();
+                push_back(new_item);
+            }
+        }
+
+        constexpr vector &operator=(const vector &other)
+        {
+            if (this == &other)
+            {
+                return *this;
             }
 
-            push
+            vector copy(other);
+            swap(copy);
+            return *this;
         }
+
+        constexpr vector(const vector &other)
+        {
+            std::size_t count = other.m_last - other.m_start;
+
+            if (count == 0)
+            {
+                m_start = nullptr;
+                m_last = nullptr;
+                m_end_of_storage = nullptr;
+                return;
+            }
+
+            m_start = static_cast<T *>(::operator new(count * sizeof(T)));
+            m_last = m_start;
+            m_end_of_storage = m_start + count;
+
+            try
+            {
+                for (T *curr = other.m_start; curr != other.m_last; curr++)
+                {
+                    std::construct_at(m_last, *curr);
+                    m_last++;
+                }
+            }
+            catch (...)
+            {
+                std::destroy(m_start, m_last);
+                ::operator delete(m_start);
+                throw;
+            }
+        }
+
         constexpr ~vector()
         {
             std::destroy(m_start, m_last);
@@ -69,15 +115,25 @@ namespace mstd
 
         constexpr std::size_t size() const noexcept
         {
+            if (m_start == nullptr)
+            {
+                return 0;
+            }
+
             return m_last - m_start;
         }
 
         constexpr std::size_t capacity() const noexcept
         {
+            if (m_start == nullptr)
+            {
+                return 0;
+            }
+
             return m_end_of_storage - m_start;
         }
 
-        constexpr bool empty()
+        constexpr bool empty() const noexcept
         {
             return m_start == m_last;
         }
@@ -91,6 +147,14 @@ namespace mstd
 
             std::construct_at(m_last, std::move(new_item));
             m_last++;
+        }
+
+        constexpr void swap(vector &other) noexcept
+        {
+            using std::swap;
+            swap(m_start, other.m_start);
+            swap(m_last, other.m_last);
+            swap(m_end_of_storage, other.m_end_of_storage);
         }
 
         T &operator[](std::size_t index) noexcept
