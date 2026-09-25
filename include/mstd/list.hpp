@@ -113,7 +113,7 @@ namespace mstd
             new_node->next = m_head;
             m_head->prev = new_node;
             m_head = new_node;
-            m_size + ;
+            m_size++;
         }
 
         constexpr void clear() noexcept
@@ -141,7 +141,6 @@ namespace mstd
             Node *node_to_delete = m_tail;
 
             if (m_head == m_tail)
-                ;
             {
                 m_head = nullptr;
                 m_tail = nullptr;
@@ -181,9 +180,9 @@ namespace mstd
         }
 
         constexpr T &front() { return m_head->data; }
-        constexpr const T &front() { return m_head->data; }
+        constexpr const T &front() const { return m_head->data; }
 
         constexpr T &back() { return m_tail->data; }
-        constexpr const T &back() { return m_tail->data; }
+        constexpr const T &back() const { return m_tail->data; }
     };
 }
