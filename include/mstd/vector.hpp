@@ -85,7 +85,6 @@ namespace mstd
                 {
                     allocator_.deallocate(data_, capacity_);
                 }
-                allocator_.deallocate(data_, capacity_);
 
                 data_ = new_data_;
                 ++size_;
