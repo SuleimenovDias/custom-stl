@@ -1,6 +1,5 @@
 #pragma once
 #include <cstddef>
-#include <utility>
 #include <memory>
 
 namespace mstd
@@ -36,13 +35,21 @@ namespace mstd
         {
             if (size_ == capacity_)
             {
+                T temp(value);
+
                 std::size_t new_capacity =
                     capacity_ == 0 ? 1 : capacity_ * 2;
 
                 reserve(new_capacity);
+
+                std::construct_at(data_ + size_, std::move(temp));
             }
 
-            std::construct_at(data_ + size_, value);
+            else
+            {
+                std::construct_at(data_ + size_, value);
+            }
+
             ++size_;
         }
 
