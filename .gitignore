@@ -1,3 +1,4 @@
 /build-fresh
 /build
-/src/main.dSYM
+/src/main.dSYM/Contents
+/src/main

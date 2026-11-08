@@ -1,42 +1,34 @@
 #include <iostream>
-#include <cassert>
-#include <string_view>
-#include "mstd/trie.hpp"
+#include <mstd/vector.hpp>
 
 int main()
 {
-    std::cout << "--- Testing mstd::trie ---\n";
+    mstd::vector<int> v;
 
-    mstd::trie my_trie;
+    for (int i = 0; i < 10; ++i)
+    {
+        v.push_back(i * 10);
 
-    my_trie.insert("apple");
-    my_trie.insert("app");
-    my_trie.insert("car");
-    my_trie.insert("cart");
+        std::cout << "size=" << v.size()
+                  << ", capacity=" << v.capacity()
+                  << '\n';
+    }
 
-    std::cout << "Searching for 'apple' (Expected: 1): " << my_trie.search("apple") << "\n";
-    std::cout << "Searching for 'app'   (Expected: 1): " << my_trie.search("app") << "\n";
-    std::cout << "Searching for 'banana'(Expected: 0): " << my_trie.search("banana") << "\n";
-    std::cout << "Searching for 'ca'    (Expected: 0): " << my_trie.search("ca") << "\n";
+    for (std::size_t i = 0; i < v.size(); ++i)
+    {
+        std::cout << v[i] << ' ';
+    }
 
-    std::cout << "---------------------------\n";
+    std::cout << '\n';
 
-    std::cout << "Starts with 'ap'      (Expected: 1): " << my_trie.starts_with("ap") << "\n";
-    std::cout << "Starts with 'car'     (Expected: 1): " << my_trie.starts_with("car") << "\n";
-    std::cout << "Starts with 'dog'     (Expected: 0): " << my_trie.starts_with("dog") << "\n";
+    v.pop_back();
+    for (std::size_t i = 0; i < v.size(); ++i)
+    {
+        std::cout << v[i] << ' ';
+    }
 
-    std::cout << "---------------------------\n";
-
-    std::cout << "Erasing 'apple'...\n";
-    my_trie.erase("apple");
-
-    std::cout << "Searching for 'apple' (Expected: 0): " << my_trie.search("apple") << "\n";
-    std::cout << "Searching for 'app'   (Expected: 1): " << my_trie.search("app") << "\n";
-
-    std::cout << "Erasing 'app'...\n";
-    my_trie.erase("app");
-    std::cout << "Starts with 'ap'      (Expected: 0): " << my_trie.starts_with("ap") << "\n";
-
-    std::cout << "\nAll core functions tested successfully! Memory cleaned up safely.\n";
-    return 0;
+    v.clear();
+    std::cout << v.capacity() << std::endl;
+    std::cout << v.size() << std::endl;
+    
 }
