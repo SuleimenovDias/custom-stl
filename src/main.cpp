@@ -5,30 +5,23 @@ int main()
 {
     mstd::vector<int> v;
 
-    for (int i = 0; i < 10; ++i)
-    {
-        v.push_back(i * 10);
+    v.push_back(10);
+    v.push_back(20);
+    v.push_back(30);
 
-        std::cout << "size=" << v.size()
-                  << ", capacity=" << v.capacity()
-                  << '\n';
-    }
+    v.resize(5);
 
     for (std::size_t i = 0; i < v.size(); ++i)
     {
-        std::cout << v[i] << ' ';
+        std::cout << v[i] << " ";
     }
 
-    std::cout << '\n';
+    std::cout << "\nSize: " << v.size();
+    std::cout << "\nCapacity: " << v.capacity();
 
-    v.pop_back();
-    for (std::size_t i = 0; i < v.size(); ++i)
-    {
-        std::cout << v[i] << ' ';
-    }
+    v.resize(2);
 
-    v.clear();
-    std::cout << v.capacity() << std::endl;
-    std::cout << v.size() << std::endl;
-    
+    std::cout << "\nAfter shrinking:";
+    std::cout << "\nSize: " << v.size();
+    std::cout << "\nCapacity: " << v.capacity();
 }

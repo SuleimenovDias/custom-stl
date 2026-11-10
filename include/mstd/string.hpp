@@ -3,277 +3,187 @@
 #include <cstring>
 #include <utility>
 #include <algorithm>
+#include <memory>
 
 namespace mstd
 {
     class string
     {
     private:
-        static constexpr std::size_t SSO_CAPACITY = 15;
-
-        struct LongLayout
-        {
-            char *start;
-            std::size_t size;
-            std::size_t capacity;
-        };
-
-        struct ShortLayout
-        {
-            char buffer[SSO_CAPACITY];
-            unsigned char shifting_or_length_flag;
-        };
-
-        union
-        {
-            LongLayout m_long;
-            ShortLayout m_short;
-        };
-
-        bool m_is_long = false;
+        std::allocator<char> allocator_;
+        char *data_;
+        std::size_t size_;
+        std::size_t capacity_;
 
     public:
-        string() = default;
-
-        string(const char *str) : m_is_long(false)
+        string() : data_(allocator_.allocate(1)), size_(0), capacity_(0)
         {
-            if (str == nullptr || str[0] == '\0')
-            {
-                m_short.buffer[0] = '\0';
-                m_short.shifting_or_length_flag = 0;
-                return;
-            }
-
-            const std::size_t len = std::strlen(str);
-            if (len <= SSO_CAPACITY)
-            {
-                std::copy(str, str + len, m_short.buffer);
-                m_short.buffer[len] = '\0';
-                m_short.shifting_or_length_flag = static_cast<unsigned char>(len);
-            }
-            else
-            {
-                m_is_long = true;
-                m_long.size = len;
-                m_long.capacity = len;
-                m_long.start = static_cast<char *>(::operator new(len + 1));
-                std::memcpy(m_long.start, str, len + 1);
-            }
+            std::construct_at(data_, '\0');
         }
 
-        string(const string &other) : m_is_long(false)
+        explicit string(const char *text) : data_(nullptr), size_(0), capacity_(0)
         {
-            m_is_long = other.m_is_long;
+            std::size_t n = strlen(text);
 
-            if (!m_is_long)
+            data_ = allocator_.allocate(n + 1);
+
+            for (std::size_t i = 0; i < n; ++i)
             {
-                std::memcpy(m_short.buffer, other.m_short.buffer, SSO_CAPACITY);
-                m_short.shifting_or_length_flag = other.m_short.shifting_or_length_flag;
-                return;
+                std::construct_at(data_ + i, text[i]);
             }
 
-            m_long.start = static_cast<char *>(::operator new(other.m_long.size + 1));
-            std::memcpy(m_long.start, other.m_long.start, other.m_long.size);
-            m_long.start[other.m_long.size] = '\0';
+            std::construct_at(data_ + n, '\0');
 
-            m_long.size = other.m_long.size;
-            m_long.capacity = other.m_long.size;
-        }
-
-        constexpr string(string &&other) noexcept : m_long(), m_is_long(other.m_is_long)
-        {
-            if (!m_is_long)
-            {
-                std::copy(other.m_short.buffer, other.m_short.buffer + 16, m_short.buffer);
-                m_short.shifting_or_length_flag = other.m_short.shifting_or_length_flag;
-
-                other.m_short.buffer[0] = '\0';
-                other.m_short.shifting_or_length_flag = 0;
-                return;
-            }
-
-            m_long.start = other.m_long.start;
-            m_long.size = other.m_long.size;
-            m_long.capacity = other.m_long.capacity;
-
-            other.m_is_long = false;
-            other.m_short.buffer[0] = '\0';
-            other.m_short.shifting_or_length_flag = 0;
-        }
-
-        constexpr string &operator=(string &&other) noexcept
-        {
-            if (this == &other)
-                return *this;
-
-            if (m_is_long)
-            {
-                delete[] m_long.start;
-            }
-
-            m_is_long = other.m_is_long;
-            if (!m_is_long)
-            {
-                std::copy(other.m_short.buffer, other.m_short.buffer + 16, m_short.buffer);
-                m_short.shifting_or_length_flag = other.m_short.shifting_or_length_flag;
-            }
-            else
-            {
-                m_long.start = other.m_long.start;
-                m_long.size = other.m_long.size;
-                m_long.capacity = other.m_long.capacity;
-            }
-
-            other.m_is_long = false;
-            other.m_short.buffer[0] = '\0';
-            other.m_short.shifting_or_length_flag = 0;
-
-            return *this;
+            size_ = n;
+            capacity_ = n;
         }
 
         ~string()
         {
-            if (m_is_long)
+            if (data_ != nullptr)
             {
-                ::operator delete(m_long.start);
+                allocator_.deallocate(data_, capacity_ + 1);
             }
         }
 
-        constexpr std::size_t size() const noexcept
+        string(const string &other)
         {
-            if (m_is_long)
-                return m_long.size;
-            return m_short.shifting_or_length_flag;
-        }
+            data_ = allocator_.allocate(other.capacity_ + 1);
 
-        constexpr const char *c_str() const
-        {
-            if (m_is_long)
-                return m_long.start;
-            return m_short.buffer;
-        }
+            std::memcpy(data_, other.data_, other.size_ + 1);
 
-        char &operator[](std::size_t index)
-        {
-            if (m_is_long)
-                return m_long.start[index];
-            return m_short.buffer[index];
-        }
-
-        constexpr void swap(string &other)
-        {
-            using std::swap;
-            swap(m_long, other.m_long);
-            swap(m_is_long, other.m_is_long);
+            size_ = other.size_;
+            capacity_ = other.capacity_;
         }
 
         string &operator=(const string &other)
         {
             if (this == &other)
-            {
                 return *this;
-            }
 
-            string copy(other);
-            swap(copy);
+            char *new_data = allocator_.allocate(other.capacity_ + 1);
+
+            std::memcpy(new_data, other.data_, other.size_ + 1);
+
+            if (data_ != nullptr)
+                allocator_.deallocate(data_, capacity_ + 1);
+
+            data_ = new_data;
+            size_ = other.size_;
+            capacity_ = other.capacity_;
 
             return *this;
         }
 
-        constexpr string &append(const char *str, std::size_t count)
+        string(string &&other)
         {
-            if (count == 0 || str == nullptr)
+            char *empty = allocator_.allocate(1);
+            std::construct_at(empty, '\0');
+
+            data_ = other.data_;
+            capacity_ = other.capacity_;
+            size_ = other.size_;
+
+            other.data_ = empty;
+            other.capacity_ = 0;
+            other.size_ = 0;
+        }
+
+        string &operator=(string &&other) noexcept
+        {
+            if (this == &other)
                 return *this;
 
-            const std::size_t current_size = size();
-            const std::size_t new_size = current_size + count;
+            char *empty = allocator_.allocate(1);
+            std::construct_at(empty, '\0');
 
-            if (!m_is_long)
-            {
-                if (new_size <= SSO_CAPACITY)
-                {
-                    std::copy(str, str + count, m_short.buffer + current_size);
-                    m_short.buffer[new_size] = '\0';
-                    m_short.shifting_or_length_flag = static_cast<unsigned char>(new_size);
-                    return *this;
-                }
+            std::swap(data_, other.data_);
+            std::swap(size_, other.size_);
+            std::swap(capacity_, other.capacity_);
 
-                std::size_t new_cap = (new_size * 2 < 32) ? 32 : new_size * 2;
-                char *new_start = new char[new_cap + 1];
-
-                std::copy(m_short.buffer, m_short.buffer + current_size, new_start);
-                std::copy(str, str + count, new_start + current_size);
-                new_start[new_size] = '\0';
-
-                m_is_long = true;
-                m_long.start = new_start;
-                m_long.size = new_size;
-                m_long.capacity = new_cap;
-                return *this;
-            }
-
-            if (new_size <= m_long.capacity)
-            {
-                std::copy(str, str + count, m_long.start + current_size);
-                m_long.start[new_size] = '\0';
-                m_long.size = new_size;
-                return *this;
-            }
-
-            std::size_t new_cap = m_long.capacity * 2;
-            if (new_cap < new_size)
-            {
-                new_cap = new_size;
-            }
-
-            char *new_start = new char[new_cap + 1];
-
-            std::copy(m_long.start, m_long.start + current_size, new_start);
-            std::copy(str, str + count, new_start + current_size);
-            new_start[new_size] = '\0';
-
-            delete[] m_long.start;
-            m_long.start = new_start;
-            m_long.size = new_size;
-            m_long.capacity = new_cap;
+            other.data_[0] = '\0';
+            other.size_ = 0;
 
             return *this;
         }
 
-        constexpr string &operator+=(const string &other)
+        std::size_t size() const noexcept
         {
-            return append(other.c_str(), other.size());
+            return size_;
+        };
+
+        const char *c_str() const noexcept
+        {
+            return data_;
+        };
+
+        std::size_t capacity() const noexcept
+        {
+            return capacity_;
         }
 
-        constexpr string &operator+=(const char *str)
+        std::size_t length() const noexcept
         {
-            if (str == nullptr)
+            return size_;
+        }
+
+        char &operator[](std::size_t index)
+        {
+            return *(data_ + index);
+        }
+
+        const char &operator[](std::size_t index) const
+        {
+            return *(data_ + index);
+        }
+
+        void reserve(std::size_t new_capacity)
+        {
+            if (new_capacity <= capacity_)
+                return;
+
+            char *new_data_ = allocator_.allocate(new_capacity + 1);
+
+            std::memcpy(new_data_, data_, size_ + 1);
+
+            allocator_.deallocate(data_, capacity_ + 1);
+
+            data_ = new_data_;
+            capacity_ = new_capacity;
+        }
+
+        void push_back(char letter)
+        {
+            if (size_ == capacity_)
+            {
+                std::size_t new_capacity = capacity_ == 0 ? 1 : capacity_ * 2;
+                reserve(new_capacity);
+            }
+
+            data_[size_] = letter;
+            ++size_;
+            data_[size_] = '\0';
+        }
+
+        string &operator+=(char letter)
+        {
+            push_back(letter);
+            return *this;
+        }
+
+        string &operator+=(const string &other)
+        {
+            if (other.length() == 0)
                 return *this;
-            return append(str, std::strlen(str));
-        }
 
-        constexpr string &operator+=(char c)
-        {
-            return append(&c, 1);
-        }
+            std::size_t original_length = other.length();
 
-        friend string operator+(string lhs, const string &rhs)
-        {
-            lhs += rhs;
-            return lhs;
-        }
+            for (std::size_t i = 0; i < original_length; ++i)
+            {
+                push_back(other[i]);
+            }
 
-        friend string operator+(string lhs, const char *rhs)
-        {
-            lhs += rhs;
-            return lhs;
-        }
-
-        friend string operator+(const char *lhs, string rhs)
-        {
-            string result(lhs);
-            result += rhs;
-            return result;
+            return *this;
         }
     };
 }
